@@ -37,6 +37,7 @@ func init() {
 	InfoLogger = log.New(os.Stdout, "", log.Lshortfile)
 	internalErrorLogger = log.New(os.Stderr, "cflogger: ", log.Lshortfile)
 
+	maintenancePublisher = &MaintenancePublisher{}
 	maintenancePublisher.publisher, err = cfrabbit.NewPublisher("signal.out", "fanout")
 	if err != nil {
 		internalErrorLogger.Fatalf("cannot get RabbitPublisher\n%s", err.Error())
