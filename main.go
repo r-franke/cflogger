@@ -35,6 +35,8 @@ func init() {
 	_, reportErrors = os.LookupEnv("REPORT_ERRORS")
 
 	InfoLogger = log.New(os.Stdout, "", log.Lshortfile)
+	InfoLogger.Printf("cflogger: Starting up, REPORT_ERRORS = %t", reportErrors)
+
 	internalErrorLogger = log.New(os.Stderr, "cflogger: ", log.Lshortfile)
 
 	maintenancePublisher = &MaintenancePublisher{}
