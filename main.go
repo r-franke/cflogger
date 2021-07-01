@@ -2,6 +2,7 @@ package cflogger
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/r-franke/cfconfig"
 	"github.com/r-franke/cfrabbit"
 	"log"
@@ -41,7 +42,7 @@ func init() {
 	if err != nil {
 		internalErrorLogger.Fatalf("cannot get RabbitPublisher\n%s", err.Error())
 	}
-	MaintenanceLogger = log.New(maintenancePublisher, env.AppName, log.Lshortfile)
+	MaintenanceLogger = log.New(maintenancePublisher, fmt.Sprintf("%s:\n", env.AppName), log.Lshortfile)
 
 	ErrorLogger = log.New(&CustomErrorLogger{log.New(os.Stderr, "", log.Lshortfile)}, "", 0)
 }
