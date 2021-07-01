@@ -2,7 +2,6 @@ package cflogger
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/r-franke/cfconfig"
 	"github.com/r-franke/cfrabbit"
 	"log"
@@ -59,7 +58,7 @@ func (ml *MaintenancePublisher) Write(p []byte) (n int, err error) {
 		Payload: SignalMessage{
 			Channel:     "signal",
 			Subscribers: []string{"[H] Maintenance"},
-			MessageBody: fmt.Sprintf("%s: %s", env.AppName, string(p)),
+			MessageBody: string(p),
 		},
 	}
 
