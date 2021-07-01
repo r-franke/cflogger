@@ -13,6 +13,10 @@ type MaintenancePublisher struct {
 	publisher *cfrabbit.Publisher
 }
 
+type CustomErrorLogger struct {
+	*log.Logger
+}
+
 //goland:noinspection GoUnusedGlobalVariable
 var (
 	InfoLogger           *log.Logger
@@ -21,13 +25,16 @@ var (
 	internalErrorLogger  *log.Logger
 	maintenancePublisher *MaintenancePublisher
 	env                  cfconfig.Env
+	reportErrors         bool
 )
 
 func init() {
 	var err error
 	env = cfconfig.LoadEnvironment("cflogger-dev", []cfconfig.Request{})
+
+	_, reportErrors = os.LookupEnv("REPORT_ERRORS")
+
 	InfoLogger = log.New(os.Stdout, "", log.Lshortfile)
-	ErrorLogger = log.New(os.Stderr, "", log.Lshortfile)
 	internalErrorLogger = log.New(os.Stderr, "cflogger: ", log.Lshortfile)
 
 	maintenancePublisher.publisher, err = cfrabbit.NewPublisher("signal.out", "fanout")
@@ -35,6 +42,15 @@ func init() {
 		internalErrorLogger.Fatalf("cannot get RabbitPublisher\n%s", err.Error())
 	}
 	MaintenanceLogger = log.New(maintenancePublisher, env.AppName, log.Lshortfile)
+
+	ErrorLogger = log.New(&CustomErrorLogger{log.New(os.Stderr, "", log.Lshortfile)}, "", 0)
+}
+func (cel *CustomErrorLogger) Write(p []byte) (n int, err error) {
+	if reportErrors {
+		MaintenanceLogger.Print(string(p))
+	}
+	cel.Logger.Print(string(p))
+	return len(p), nil
 }
 
 func (ml *MaintenancePublisher) Write(p []byte) (n int, err error) {
