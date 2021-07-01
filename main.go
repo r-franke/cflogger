@@ -9,17 +9,18 @@ import (
 	"os"
 )
 
-type MaintenanceLog struct {
+type MaintenancePublisher struct {
 	publisher *cfrabbit.Publisher
 }
 
 //goland:noinspection GoUnusedGlobalVariable
 var (
-	MaintenanceLogger   *MaintenanceLog
-	InfoLogger          *log.Logger
-	ErrorLogger         *log.Logger
-	internalErrorLogger *log.Logger
-	env                 cfconfig.Env
+	InfoLogger           *log.Logger
+	ErrorLogger          *log.Logger
+	MaintenanceLogger    *log.Logger
+	internalErrorLogger  *log.Logger
+	maintenancePublisher *MaintenancePublisher
+	env                  cfconfig.Env
 )
 
 func init() {
@@ -29,32 +30,31 @@ func init() {
 	ErrorLogger = log.New(os.Stderr, "", log.Lshortfile)
 	internalErrorLogger = log.New(os.Stderr, "cflogger: ", log.Lshortfile)
 
-	MaintenanceLogger.publisher, err = cfrabbit.NewPublisher("signal.out", "fanout")
+	maintenancePublisher.publisher, err = cfrabbit.NewPublisher("signal.out", "fanout")
 	if err != nil {
 		internalErrorLogger.Fatalf("cannot get RabbitPublisher\n%s", err.Error())
 	}
+	MaintenanceLogger = log.New(maintenancePublisher, env.AppName, log.Lshortfile)
 }
 
-func (ml *MaintenanceLog) Printf(format string, a ...interface{}) {
-	msg := fmt.Sprintf(format, a...)
+func (ml *MaintenancePublisher) Write(p []byte) (n int, err error) {
 	signalMsg := Payload{
 		Payload: SignalMessage{
 			Channel:     "signal",
 			Subscribers: []string{"[H] Maintenance"},
-			MessageBody: fmt.Sprintf("%s: %s", env.AppName, msg),
+			MessageBody: fmt.Sprintf("%s: %s", env.AppName, string(p)),
 		},
 	}
 
 	marshalledMsg, err := json.Marshal(signalMsg)
 	if err != nil {
 		internalErrorLogger.Printf("error marshalling message: %v\n%s\n", signalMsg, err.Error())
+		return -1, err
 	}
 	err = ml.publisher.Publish("", marshalledMsg)
 	if err != nil {
-		internalErrorLogger.Printf("Could not send maintenance message: %s", msg)
+		internalErrorLogger.Printf("Could not send maintenance message: %s", string(p))
+		return -1, err
 	}
-}
-
-func main() {
-
+	return len(p), nil
 }
