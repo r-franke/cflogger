@@ -1,4 +1,4 @@
-package main
+package cflogger
 
 import (
 	"encoding/json"

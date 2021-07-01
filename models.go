@@ -1,4 +1,4 @@
-package main
+package cflogger
 
 type SignalMessage struct {
 	Channel     string   `json:"kanaal"`
