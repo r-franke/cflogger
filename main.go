@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/r-franke/cfconfig"
-	"github.com/r-franke/cfrabbit"
+	"github.com/r-franke/cfrabbit/publisher"
 	"log"
 	"os"
 )
 
 type MaintenancePublisher struct {
-	publisher *cfrabbit.Publisher
+	publisher *publisher.Publisher
 }
 
 type CustomErrorLogger struct {
@@ -40,10 +40,11 @@ func init() {
 	internalErrorLogger = log.New(os.Stderr, "cflogger: ", log.Lshortfile)
 
 	maintenancePublisher = &MaintenancePublisher{}
-	maintenancePublisher.publisher, err = cfrabbit.NewPublisher("signal.out", "fanout")
+	pub, err := publisher.NewPublisher("signal.out", "fanout")
 	if err != nil {
 		internalErrorLogger.Fatalf("cannot get RabbitPublisher\n%s", err.Error())
 	}
+	maintenancePublisher.publisher = &pub
 	MaintenanceLogger = log.New(maintenancePublisher, fmt.Sprintf("%s:\n", env.AppName), log.Lshortfile)
 
 	ErrorLogger = log.New(&CustomErrorLogger{log.New(os.Stderr, "", log.Lshortfile)}, "", 0)
